@@ -1,7 +1,7 @@
 {
   "name": "governed-prompt-studio",
   "displayName": "Governed Prompt Studio",
-  "description": "Estudio de prompts gobernados para GitHub Copilot sin integracion directa con APIs.",
+  "description": "Governed prompt studio for GitHub Copilot without direct API integration.",
   "version": "0.1.0",
   "publisher": "donaldomoreno",
   "engines": {
@@ -9,6 +9,12 @@
   },
   "categories": [
     "Other"
+  ],
+  "activationEvents": [
+    "onCommand:aiGovernance.openPromptStudio",
+    "onCommand:aiGovernance.copyGovernedPrompt",
+    "onCommand:aiGovernance.runPolicyCheck",
+    "onCommand:aiGovernance.setTier"
   ],
   "main": "./out/extension.js",
   "scripts": {
@@ -47,7 +53,7 @@
             "3"
           ],
           "default": "auto",
-          "description": "Tier de gobernanza del proyecto. Usa auto para deteccion automatica."
+          "description": "Project governance tier. Use auto for automatic detection."
         },
         "aiGovernance.preset": {
           "type": "string",
@@ -57,7 +63,7 @@
             "Strict"
           ],
           "default": "Safe",
-          "description": "Preset de gobernanza aplicado al compilar prompts."
+          "description": "Governance preset applied when compiling prompts."
         }
       }
     }

@@ -1,36 +1,36 @@
 # Governed Prompt Studio
 
-`Governed Prompt Studio` es una extension de VS Code para redactar prompts gobernados para GitHub Copilot sin usar integraciones directas de API.
+`Governed Prompt Studio` is a VS Code extension for creating governed prompts for GitHub Copilot without any direct API integration.
 
-La extension:
-- Construye un prompt final con estructura de gobernanza por `Tier` y `Scope`.
-- Referencia archivos dentro del repositorio (`ai-governance/*`) en lugar de embeder reglas en duro.
-- Ejecuta un `Policy Check` local y publica hallazgos en el panel `Problems`.
-- Copia el prompt gobernado al portapapeles para pegarlo en Copilot Chat.
+The extension:
+- Builds a final prompt with governance structure by `Tier` and `Scope`.
+- References repository files (`ai-governance/*`) instead of hardcoding rules.
+- Runs a local `Policy Check` and publishes findings to the `Problems` panel.
+- Copies the governed prompt to the clipboard so you can paste it into Copilot Chat.
 
-## Caracteristicas principales
+## Key Features
 
-- Webview `Prompt Studio` con:
-	- Editor multilinea para la tarea del usuario.
-	- Selector de Tier (`Auto / 1 / 2 / 3`).
-	- Selector de Preset (`Fast / Safe / Strict`).
-	- Checklist de scopes de gobernanza.
-	- Preview de archivos de contexto de gobernanza.
-	- Botones para generar preview, copiar prompt y ejecutar policy check.
-- Integracion en Status Bar:
-	- `Tier: <Auto|1|2|3> | Preset: <Fast|Safe|Strict> | Policy: <OK|WARN|DENY>`
-	- QuickPick con acciones rapidas.
-- Resolucion de Tier con prioridad:
-	1. `AI_PROJECT_PROFILE.yaml`
-	2. Configuracion `aiGovernance.tier`
-	3. Deteccion automatica por heuristicas del repositorio
-- `Policy Checker` local para detectar:
-	- Secretos hardcodeados (`API_KEY=`, `SECRET=`, `password=`, `token=`)
-	- Keywords de sobreingenieria (`kubernetes`, `microservices`, `kafka`, `elasticsearch`, `service mesh`)
-	- Dependencias restringidas definidas en YAML
-- Scaffolding de plantillas `ai-governance` cuando faltan archivos.
+- `Prompt Studio` webview with:
+  - Multi-line user task editor.
+  - Tier selector (`Auto / 1 / 2 / 3`).
+  - Preset selector (`Fast / Safe / Strict`).
+  - Governance scope checklist (`Security`, `Architecture`, `Dependencies`, `Workflow`, `Compliance`, `Observability`, `Cost`, `Troubleshooting`).
+  - Governance context file preview.
+  - Buttons to generate preview, copy prompt, and run policy check.
+- Status bar integration:
+  - `Tier: <Auto|1|2|3> | Preset: <Fast|Safe|Strict> | Policy: <OK|WARN|DENY>`
+  - QuickPick with fast actions.
+- Tier resolution priority:
+  1. `AI_PROJECT_PROFILE.yaml`
+  2. `aiGovernance.tier` setting
+  3. Auto-detection from repository heuristics
+- Local `Policy Checker` detects:
+  - Hardcoded secrets (`API_KEY=`, `SECRET=`, `password=`, `token=`)
+  - Overengineering keywords (`kubernetes`, `microservices`, `kafka`, `elasticsearch`, `service mesh`)
+  - Restricted dependencies from YAML rules
+- Governance template scaffolding when `ai-governance` files are missing.
 
-## Estructura del proyecto
+## Project Structure
 
 ```text
 .
@@ -48,6 +48,7 @@ La extension:
 │       ├── compliance.md
 │       ├── observability.md
 │       ├── cost.md
+│       ├── troubleshooting.md
 │       └── dependency-rules.yaml
 ├── src/
 │   ├── extension.ts
@@ -64,25 +65,25 @@ La extension:
 └── README.md
 ```
 
-## Comandos de Command Palette
+## Command Palette Commands
 
 - `AI Governance: Open Prompt Studio`
 - `AI Governance: Copy Governed Prompt to Clipboard`
 - `AI Governance: Run Policy Check`
 - `AI Governance: Set Tier`
 
-## Flujo de uso
+## Usage Flow
 
-1. Ejecuta `AI Governance: Open Prompt Studio`.
-2. Escribe la tarea en el editor de prompt.
-3. Elige `Tier`, `Preset` y `Scopes`.
-4. Usa `Generate Preview` para previsualizar el prompt gobernado.
-5. Usa `Copy Governed Prompt to Clipboard` para copiarlo.
-6. Pega el prompt en Copilot Chat.
+1. Run `AI Governance: Open Prompt Studio`.
+2. Write your task in the prompt editor.
+3. Select `Tier`, `Preset`, and `Scopes`.
+4. Click `Generate Preview` to preview the governed prompt.
+5. Click `Copy Governed Prompt to Clipboard`.
+6. Paste the prompt into Copilot Chat.
 
-## Estructura del prompt compilado
+## Compiled Prompt Structure
 
-El compilador genera las secciones:
+The compiler generates these sections:
 - `ROLE`
 - `PROJECT PROFILE`
 - `ACTIVE GOVERNANCE`
@@ -92,53 +93,53 @@ El compilador genera las secciones:
 
 ## Policy Checker
 
-Severidad por tier:
+Severity by tier:
 - Tier 1:
-	- secretos: `DENY`
-	- sobreingenieria: `WARN`
-	- dependencias restringidas: `WARN`
+  - secrets: `DENY`
+  - overengineering: `WARN`
+  - restricted dependencies: `WARN`
 - Tier 2:
-	- secretos: `DENY`
-	- dependencias restringidas: `DENY`
-	- sobreingenieria: `WARN`
+  - secrets: `DENY`
+  - restricted dependencies: `DENY`
+  - overengineering: `WARN`
 - Tier 3:
-	- la mayoria de violaciones: `DENY`
+  - most violations: `DENY`
 
-Los hallazgos se publican en `Problems`.
+Findings are published in `Problems`.
 
-## Compilar y empaquetar
+## Build and Package
 
-Instalar dependencias:
+Install dependencies:
 
 ```bash
 npm install
 ```
 
-Compilar:
+Compile:
 
 ```bash
 npm run compile
 ```
 
-Empaquetar VSIX:
+Package VSIX:
 
 ```bash
 npm run package
 ```
 
-## Instalar la extension VSIX
+## Install the VSIX Extension
 
-1. Genera el archivo `.vsix` con `npm run package`.
-2. En VS Code, abre `Extensions`.
-3. Selecciona `Install from VSIX...`.
-4. Elige el archivo generado.
+1. Generate the `.vsix` file with `npm run package`.
+2. In VS Code, open `Extensions`.
+3. Select `Install from VSIX...`.
+4. Choose the generated file.
 
-## CI para VSIX
+## VSIX CI
 
-El workflow `.github/workflows/build-vsix.yml` ejecuta:
+Workflow `.github/workflows/build-vsix.yml` runs:
 - checkout
 - setup node
 - npm install
 - compile
 - vsce package
-- upload del artifact VSIX
+- upload VSIX artifact

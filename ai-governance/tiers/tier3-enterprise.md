@@ -1,9 +1,9 @@
-# Tier 3 - Empresarial
+# Tier 3 - Enterprise
 
-Objetivo: proteger sistemas criticos con controles estrictos.
+Goal: protect critical systems with strict controls.
 
-Reglas base:
-- Seguridad y cumplimiento son no negociables.
-- Requiere trazabilidad y justificacion de decisiones.
-- Validar impacto de costo, observabilidad y operacion.
-- Incluir planes de mitigacion y rollback para cambios relevantes.
+Baseline rules:
+- Security and compliance are non-negotiable.
+- Require traceability and justification for decisions.
+- Validate cost, observability, and operational impact.
+- Include mitigation and rollback plans for relevant changes.

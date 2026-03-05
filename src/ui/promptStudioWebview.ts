@@ -106,7 +106,7 @@ export class PromptStudioWebview {
     const initialJson = JSON.stringify(initialState).replace(/</g, "\\u003c");
 
     return `<!DOCTYPE html>
-<html lang="es-MX">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'nonce-${nonce}';" />
@@ -114,17 +114,22 @@ export class PromptStudioWebview {
   <title>Prompt Studio</title>
   <style>
     :root {
-      --bg: #f7f7f2;
-      --card: #ffffff;
-      --ink: #183a37;
-      --accent: #d95d39;
-      --accent-soft: #f4b860;
-      --border: #d9d9cf;
+      --bg: #0f172a;
+      --bg-gradient: #1e293b;
+      --card: #111827;
+      --card-elevated: #1f2937;
+      --ink: #e5e7eb;
+      --muted: #94a3b8;
+      --accent: #0ea5e9;
+      --accent-secondary: #3b82f6;
+      --accent-ghost: #334155;
+      --accent-soft: #1d4ed8;
+      --border: #334155;
     }
     body {
       font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
       margin: 0;
-      background: linear-gradient(140deg, #f7f7f2 0%, #efe9dc 100%);
+      background: radial-gradient(circle at top right, #1e293b 0%, var(--bg) 52%, #020617 100%);
       color: var(--ink);
       padding: 16px;
     }
@@ -138,7 +143,7 @@ export class PromptStudioWebview {
       border: 1px solid var(--border);
       border-radius: 12px;
       padding: 12px;
-      box-shadow: 0 6px 16px rgba(24, 58, 55, 0.08);
+      box-shadow: 0 10px 24px rgba(2, 6, 23, 0.45);
     }
     h1 {
       margin: 0 0 10px;
@@ -148,6 +153,9 @@ export class PromptStudioWebview {
       margin: 0 0 8px;
       font-size: 1rem;
     }
+    label {
+      color: var(--muted);
+    }
     textarea, select {
       width: 100%;
       border: 1px solid var(--border);
@@ -155,8 +163,12 @@ export class PromptStudioWebview {
       padding: 8px;
       box-sizing: border-box;
       font-size: 0.95rem;
-      background: #fffef9;
+      background: var(--card-elevated);
       color: var(--ink);
+    }
+    textarea:focus, select:focus {
+      outline: 1px solid var(--accent);
+      border-color: var(--accent);
     }
     textarea {
       min-height: 120px;
@@ -173,20 +185,21 @@ export class PromptStudioWebview {
       gap: 8px;
     }
     button {
-      border: none;
+      border: 1px solid transparent;
       border-radius: 10px;
       padding: 8px 12px;
       font-weight: 600;
       cursor: pointer;
       color: #fff;
       background: var(--accent);
-      transition: transform 120ms ease, opacity 120ms ease;
+      transition: transform 120ms ease, opacity 120ms ease, background 120ms ease;
     }
     button.secondary {
-      background: #33658a;
+      background: var(--accent-secondary);
     }
     button.ghost {
-      background: #758e4f;
+      background: var(--accent-ghost);
+      border-color: var(--border);
     }
     button:hover {
       transform: translateY(-1px);
@@ -200,6 +213,8 @@ export class PromptStudioWebview {
       display: inline-block;
       border-radius: 999px;
       background: var(--accent-soft);
+      color: #dbeafe;
+      border: 1px solid #1e40af;
       padding: 4px 10px;
       font-size: 0.85rem;
       font-weight: 600;
@@ -212,11 +227,11 @@ export class PromptStudioWebview {
   <div class="grid" style="margin-top: 12px;">
     <section class="card" style="grid-column: 1 / -1;">
       <h2>Prompt Editor</h2>
-      <textarea id="userTask" placeholder="Escribe la tarea para Copilot..."></textarea>
+      <textarea id="userTask" placeholder="Write the task for Copilot..."></textarea>
     </section>
 
     <section class="card">
-      <h2>Configuracion de Gobierno</h2>
+      <h2>Governance Configuration</h2>
       <label for="tier">Tier</label>
       <select id="tier">
         <option value="auto">Auto</option>
@@ -240,6 +255,7 @@ export class PromptStudioWebview {
           <label><input type="checkbox" value="Compliance" checked /> Compliance</label>
           <label><input type="checkbox" value="Observability" checked /> Observability</label>
           <label><input type="checkbox" value="Cost" checked /> Cost</label>
+          <label><input type="checkbox" value="Troubleshooting" checked /> Troubleshooting</label>
         </div>
       </div>
     </section>
@@ -250,7 +266,7 @@ export class PromptStudioWebview {
     </section>
 
     <section class="card" style="grid-column: 1 / -1;">
-      <h2>Acciones</h2>
+      <h2>Actions</h2>
       <div class="actions">
         <button id="btnGenerate" class="secondary">Generate Preview</button>
         <button id="btnCopy">Copy Governed Prompt to Clipboard</button>
@@ -259,7 +275,7 @@ export class PromptStudioWebview {
     </section>
 
     <section class="card" style="grid-column: 1 / -1;">
-      <h2>Prompt Governado (Preview)</h2>
+      <h2>Governed Prompt (Preview)</h2>
       <textarea id="preview" readonly></textarea>
     </section>
   </div>
@@ -290,7 +306,7 @@ export class PromptStudioWebview {
       }
       if (!files.length) {
         const li = document.createElement("li");
-        li.textContent = "No se encontraron archivos de gobernanza.";
+        li.textContent = "No governance files were found.";
         elements.contextFiles.appendChild(li);
       }
     }

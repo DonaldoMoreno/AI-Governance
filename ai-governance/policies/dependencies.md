@@ -1,5 +1,5 @@
-# Politica de Dependencias
+# Dependency Policy
 
-- Solo usar dependencias mantenidas y con licencias compatibles.
-- Evaluar vulnerabilidades conocidas antes de introducir nuevas librerias.
-- Reducir duplicidad de librerias que resuelven el mismo problema.
+- Use only maintained dependencies with compatible licenses.
+- Evaluate known vulnerabilities before adding new libraries.
+- Reduce duplicate libraries that solve the same problem.

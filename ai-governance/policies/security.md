@@ -1,5 +1,5 @@
-# Politica de Seguridad
+# Security Policy
 
-- Prohibido incluir secretos en codigo o archivos de configuracion versionados.
-- Aplicar validaciones de entrada y salida en puntos de integracion.
-- Minimizar privilegios de acceso y evitar credenciales compartidas.
+- Do not include secrets in code or versioned configuration files.
+- Apply input/output validation at integration points.
+- Minimize access privileges and avoid shared credentials.

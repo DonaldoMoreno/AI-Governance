@@ -1,5 +1,5 @@
-# Politica de Workflow
+# Workflow Policy
 
-- Mantener cambios atomicos y faciles de revisar.
-- Ejecutar compilacion y checks basicos antes de integrar.
-- Incluir contexto de negocio y tecnico en cada PR.
+- Keep changes atomic and easy to review.
+- Run build and basic checks before integrating.
+- Include business and technical context in every PR.

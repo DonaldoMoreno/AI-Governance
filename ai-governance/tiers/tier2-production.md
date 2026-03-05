@@ -1,9 +1,9 @@
-# Tier 2 - Produccion
+# Tier 2 - Production
 
-Objetivo: balancear velocidad con estabilidad operativa.
+Goal: balance speed with operational stability.
 
-Reglas base:
-- Mantener compatibilidad y calidad en cambios de funcionalidad.
-- Revisar seguridad y dependencias antes de liberar.
-- Documentar decisiones de arquitectura relevantes.
-- Exigir pruebas para flujos criticos.
+Baseline rules:
+- Maintain compatibility and quality for functional changes.
+- Review security and dependencies before release.
+- Document relevant architecture decisions.
+- Require tests for critical workflows.

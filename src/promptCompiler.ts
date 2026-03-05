@@ -18,35 +18,35 @@ export interface PromptCompileInput {
 function outputContractByTier(tier: GovernanceTier): string {
   if (tier === "1") {
     return [
-      "1. Respuesta breve y enfocada en entregar una solucion funcional.",
-      "2. Incluir riesgos minimos de seguridad detectados.",
-      "3. Proponer el siguiente paso inmediato.",
+      "1. Keep the response concise and focused on delivering a functional solution.",
+      "2. Include any minimal security risks detected.",
+      "3. Propose the immediate next step.",
     ].join("\n");
   }
 
   if (tier === "2") {
     return [
-      "1. Respuesta estructurada por: Diseno, Implementacion, Riesgos, Pruebas.",
-      "2. Explicar impacto en dependencias y arquitectura.",
-      "3. Incluir checklist de validacion antes de merge.",
+      "1. Structure the response as: Design, Implementation, Risks, Testing.",
+      "2. Explain impact on dependencies and architecture.",
+      "3. Include a validation checklist before merge.",
     ].join("\n");
   }
 
   return [
-    "1. Respuesta formal con secciones: Decision, Controles, Cumplimiento, Operacion.",
-    "2. Incluir mitigaciones, observabilidad y costo operativo.",
-    "3. Incluir supuestos, riesgos residuales y estrategia de rollback.",
+    "1. Provide a formal response with sections: Decision, Controls, Compliance, Operations.",
+    "2. Include mitigations, observability, and operational cost impact.",
+    "3. Include assumptions, residual risks, and a rollback strategy.",
   ].join("\n");
 }
 
 function presetDescription(preset: GovernancePreset): string {
   if (preset === "Fast") {
-    return "Fast: prioriza velocidad con controles minimos obligatorios.";
+    return "Fast: prioritizes speed with mandatory minimum controls.";
   }
   if (preset === "Safe") {
-    return "Safe: equilibrio entre velocidad, calidad y seguridad.";
+    return "Safe: balances speed, quality, and security.";
   }
-  return "Strict: maximo apego a gobernanza y validaciones.";
+  return "Strict: maximum adherence to governance and validations.";
 }
 
 export function compileGovernedPrompt(input: PromptCompileInput): string {
@@ -54,7 +54,7 @@ export function compileGovernedPrompt(input: PromptCompileInput): string {
 
   const sections = [
     "ROLE",
-    "Eres un asistente de desarrollo que debe cumplir estrictamente la gobernanza del repositorio. No ignores reglas.",
+    "You are a development assistant that must strictly follow repository governance. Do not ignore rules.",
     "",
     "PROJECT PROFILE",
     input.profileSummary,
@@ -65,14 +65,14 @@ export function compileGovernedPrompt(input: PromptCompileInput): string {
     `Preset: ${input.preset} (${presetDescription(input.preset)})`,
     "",
     "GOVERNANCE DOCUMENTS",
-    "Lee y aplica estos archivos del repositorio antes de responder:",
+    "Read and apply these repository files before responding:",
     ...relativeFiles.map((rel) => `- ${rel}`),
     "",
     "OUTPUT CONTRACT",
     outputContractByTier(input.tier),
     "",
     "USER TASK",
-    input.userTask.trim() || "Sin tarea especificada.",
+    input.userTask.trim() || "No task specified.",
   ];
 
   return sections.join("\n");

@@ -9,7 +9,7 @@ export class GovernanceStatusBar {
   constructor() {
     this.item = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
     this.item.command = "aiGovernance.statusBarAction";
-    this.item.tooltip = "Abrir acciones de AI Governance";
+    this.item.tooltip = "Open AI Governance actions";
   }
 
   public update(tier: TierSelection, preset: GovernancePreset, policy: PolicySeverity): void {

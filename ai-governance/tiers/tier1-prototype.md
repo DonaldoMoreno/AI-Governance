@@ -1,9 +1,9 @@
-# Tier 1 - Prototipo
+# Tier 1 - Prototype
 
-Objetivo: iterar rapido manteniendo controles minimos indispensables.
+Goal: iterate quickly while keeping minimum essential controls.
 
-Reglas base:
-- Evita complejidad innecesaria.
-- Implementa solo lo necesario para validar hipotesis.
-- No hardcodear secretos.
-- Mantener cambios pequenos y faciles de revertir.
+Baseline rules:
+- Avoid unnecessary complexity.
+- Implement only what is needed to validate hypotheses.
+- Do not hardcode secrets.
+- Keep changes small and easy to roll back.

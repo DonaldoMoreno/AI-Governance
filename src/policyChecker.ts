@@ -107,7 +107,7 @@ function checkDependencies(rootPath: string, tier: GovernanceTier, findings: Pol
         filePath: packageJsonPath,
         line: 0,
         severity: dependencySeverity(tier),
-        message: `[Dependencias] La dependencia \"${depName}\" esta denegada para Tier ${tier}.`,
+        message: `[Dependencies] Dependency \"${depName}\" is denied for Tier ${tier}.`,
       });
       continue;
     }
@@ -117,7 +117,7 @@ function checkDependencies(rootPath: string, tier: GovernanceTier, findings: Pol
         filePath: packageJsonPath,
         line: 0,
         severity: "WARN",
-        message: `[Dependencias] La dependencia \"${depName}\" esta en lista de advertencia para Tier ${tier}.`,
+        message: `[Dependencies] Dependency \"${depName}\" is in warning list for Tier ${tier}.`,
       });
     }
   }
@@ -146,7 +146,7 @@ export async function runPolicyCheck(
           filePath,
           line: index,
           severity: "DENY",
-          message: "[Seguridad] Posible secreto hardcodeado detectado.",
+          message: "[Security] Possible hardcoded secret detected.",
         });
       }
 
@@ -157,7 +157,7 @@ export async function runPolicyCheck(
             filePath,
             line: index,
             severity: architectureSeverity(tier),
-            message: `[Arquitectura] Keyword de posible sobreingenieria detectado: ${keyword}.`,
+            message: `[Architecture] Potential overengineering keyword detected: ${keyword}.`,
           });
         }
       }

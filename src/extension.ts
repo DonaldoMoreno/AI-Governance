@@ -31,12 +31,13 @@ const allScopes: GovernanceScope[] = [
   "Compliance",
   "Observability",
   "Cost",
+  "Troubleshooting",
 ];
 
 export function activate(context: vscode.ExtensionContext): void {
   const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
   if (!workspaceFolder) {
-    void vscode.window.showWarningMessage("AI Governance requiere un workspace abierto.");
+    void vscode.window.showWarningMessage("AI Governance requires an open workspace.");
     return;
   }
 
@@ -67,7 +68,7 @@ export function activate(context: vscode.ExtensionContext): void {
     }
 
     const resolved = await resolveTier(workspaceFolder);
-    state.profileSummary = `${resolved.profileSummary} (Fuente: ${sourceLabel(resolved.source)})`;
+    state.profileSummary = `${resolved.profileSummary} (Source: ${sourceLabel(resolved.source)})`;
     state.resolvedTier = resolved.tier;
     return resolved.tier;
   };
@@ -98,14 +99,14 @@ export function activate(context: vscode.ExtensionContext): void {
     updateStatusBar();
 
     if (result.findings.length === 0) {
-      void vscode.window.showInformationMessage("Policy Check completado: sin hallazgos.");
+      void vscode.window.showInformationMessage("Policy Check completed: no findings.");
       return;
     }
 
     const denyCount = result.findings.filter((f) => f.severity === "DENY").length;
     const warnCount = result.findings.filter((f) => f.severity === "WARN").length;
     void vscode.window.showWarningMessage(
-      `Policy Check completado: ${denyCount} DENY, ${warnCount} WARN. Revisa el panel de Problems.`
+      `Policy Check completed: ${denyCount} DENY, ${warnCount} WARN. Review the Problems panel.`
     );
   };
 
@@ -123,7 +124,7 @@ export function activate(context: vscode.ExtensionContext): void {
           const compiled = await generatePrompt(message.userTask);
           await vscode.env.clipboard.writeText(compiled.prompt);
           void vscode.window.showInformationMessage(
-            "Prompt gobernado copiado al portapapeles. Pegalo en Copilot Chat."
+            "Governed prompt copied to clipboard. Paste it into Copilot Chat."
           );
           PromptStudioWebview.createOrShow(context, handlers, webviewState(compiled.files, compiled.prompt));
         },
@@ -156,7 +157,7 @@ export function activate(context: vscode.ExtensionContext): void {
       await syncStateFromWebview(message.tier, message.preset, message.scopes);
       const { prompt, files } = await generatePrompt(message.userTask);
       await vscode.env.clipboard.writeText(prompt);
-      void vscode.window.showInformationMessage("Prompt gobernado copiado al portapapeles. Pegalo en Copilot Chat.");
+      void vscode.window.showInformationMessage("Governed prompt copied to clipboard. Paste it into Copilot Chat.");
       PromptStudioWebview.createOrShow(context, handlers, webviewState(files, prompt));
     },
     onRunPolicyCheck: async (message: {
@@ -213,7 +214,7 @@ export function activate(context: vscode.ExtensionContext): void {
         { label: "Tier 2", value: "2" as TierSelection },
         { label: "Tier 3", value: "3" as TierSelection },
       ],
-      { placeHolder: "Selecciona el tier de gobernanza" }
+      { placeHolder: "Select a governance tier" }
     );
 
     if (!selected) {
@@ -232,11 +233,11 @@ export function activate(context: vscode.ExtensionContext): void {
   const statusBarAction = async (): Promise<void> => {
     const pick = await vscode.window.showQuickPick(
       [
-        { label: "Cambiar Tier", value: "setTier" },
-        { label: "Abrir Prompt Studio", value: "open" },
+        { label: "Change Tier", value: "setTier" },
+        { label: "Open Prompt Studio", value: "open" },
         { label: "Run Policy Check", value: "policy" },
       ],
-      { placeHolder: "Selecciona una accion" }
+      { placeHolder: "Select an action" }
     );
 
     if (!pick) {
@@ -258,7 +259,7 @@ export function activate(context: vscode.ExtensionContext): void {
       await ensureGovernanceTemplates(workspaceFolder);
       const { prompt } = await generatePrompt(state.latestPrompt);
       await vscode.env.clipboard.writeText(prompt);
-      void vscode.window.showInformationMessage("Prompt gobernado copiado al portapapeles. Pegalo en Copilot Chat.");
+      void vscode.window.showInformationMessage("Governed prompt copied to clipboard. Paste it into Copilot Chat.");
     }),
     vscode.commands.registerCommand("aiGovernance.runPolicyCheck", runPolicy),
     vscode.commands.registerCommand("aiGovernance.setTier", setTier),
@@ -273,17 +274,17 @@ export function activate(context: vscode.ExtensionContext): void {
 }
 
 export function deactivate(): void {
-  // Sin recursos adicionales para liberar.
+  // No additional resources to release.
 }
 
 function tierSummary(tier: GovernanceTier): string {
   if (tier === "1") {
-    return "Tier 1: Prototipo o proyecto pequeno con foco en velocidad de iteracion.";
+    return "Tier 1: Prototype or small project focused on iteration speed.";
   }
   if (tier === "2") {
-    return "Tier 2: Proyecto productivo con controles de calidad y seguridad formales.";
+    return "Tier 2: Production project with formal quality and security controls.";
   }
-  return "Tier 3: Sistema critico o empresarial con controles estrictos y auditoria.";
+  return "Tier 3: Enterprise or critical system with strict controls and auditing.";
 }
 
 function sourceLabel(source: "AI_PROJECT_PROFILE.yaml" | "workspace-setting" | "auto-detection"): string {
@@ -291,9 +292,9 @@ function sourceLabel(source: "AI_PROJECT_PROFILE.yaml" | "workspace-setting" | "
     return "AI_PROJECT_PROFILE.yaml";
   }
   if (source === "workspace-setting") {
-    return "configuracion aiGovernance.tier";
+    return "aiGovernance.tier setting";
   }
-  return "deteccion automatica";
+  return "automatic detection";
 }
 
 async function ensureGovernanceTemplates(workspaceFolder: vscode.WorkspaceFolder): Promise<void> {
@@ -302,11 +303,11 @@ async function ensureGovernanceTemplates(workspaceFolder: vscode.WorkspaceFolder
     return;
   }
 
-  const create = "Crear plantillas";
+  const create = "Create templates";
   const choice = await vscode.window.showInformationMessage(
-    "No se encontraron todos los archivos de ai-governance. Quieres generar plantillas por defecto?",
+    "Not all ai-governance files were found. Do you want to generate default templates?",
     create,
-    "Despues"
+    "Later"
   );
 
   if (choice !== create) {
@@ -314,5 +315,5 @@ async function ensureGovernanceTemplates(workspaceFolder: vscode.WorkspaceFolder
   }
 
   const created = scaffoldGovernanceTemplates(workspaceFolder);
-  void vscode.window.showInformationMessage(`Plantillas de gobernanza creadas: ${created.length} archivo(s).`);
+  void vscode.window.showInformationMessage(`Governance templates created: ${created.length} file(s).`);
 }

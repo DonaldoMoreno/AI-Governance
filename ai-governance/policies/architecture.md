@@ -1,5 +1,5 @@
-# Politica de Arquitectura
+# Architecture Policy
 
-- La arquitectura debe ser proporcional a la complejidad real del problema.
-- Evitar componentes distribuidos sin justificacion de negocio.
-- Documentar decisiones tecnicas con impacto operativo.
+- Architecture must be proportional to the real complexity of the problem.
+- Avoid distributed components without business justification.
+- Document technical decisions with operational impact.

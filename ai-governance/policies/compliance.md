@@ -1,5 +1,5 @@
-# Politica de Compliance
+# Compliance Policy
 
-- Registrar decisiones que afecten cumplimiento regulatorio.
-- No almacenar datos sensibles sin protecciones adecuadas.
-- Alinear implementaciones con normativas internas y externas aplicables.
+- Record decisions that affect regulatory compliance.
+- Do not store sensitive data without proper protections.
+- Align implementations with applicable internal and external regulations.

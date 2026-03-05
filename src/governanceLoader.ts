@@ -10,7 +10,8 @@ export type GovernanceScope =
   | "Workflow"
   | "Compliance"
   | "Observability"
-  | "Cost";
+  | "Cost"
+  | "Troubleshooting";
 
 const scopePolicyMap: Record<GovernanceScope, string> = {
   Security: "security.md",
@@ -20,6 +21,7 @@ const scopePolicyMap: Record<GovernanceScope, string> = {
   Compliance: "compliance.md",
   Observability: "observability.md",
   Cost: "cost.md",
+  Troubleshooting: "troubleshooting.md",
 };
 
 const requiredFiles = [
@@ -33,6 +35,7 @@ const requiredFiles = [
   "policies/compliance.md",
   "policies/observability.md",
   "policies/cost.md",
+  "policies/troubleshooting.md",
   "policies/dependency-rules.yaml",
 ];
 
@@ -81,20 +84,21 @@ function defaultTemplateByPath(relPath: string): string {
   const normalized = relPath.replace(/\\/g, "/");
 
   const templates: Record<string, string> = {
-    "tiers/tier1-prototype.md": "# Tier 1 - Prototipo\n\n- Prioriza velocidad y simplicidad.\n- Evita sobreingenieria innecesaria.\n- Mantener estandares minimos de seguridad.\n",
-    "tiers/tier2-production.md": "# Tier 2 - Produccion\n\n- Requiere pruebas automatizadas para cambios criticos.\n- Requiere controles de dependencias y revisiones de arquitectura.\n- Seguridad y estabilidad son obligatorias.\n",
-    "tiers/tier3-enterprise.md": "# Tier 3 - Empresarial\n\n- Requiere trazabilidad, auditoria y hardening.\n- Controles estrictos de seguridad, cumplimiento y costos.\n- Cambios de alto impacto deben incluir plan de rollback.\n",
-    "policies/security.md": "# Politica de Seguridad\n\n- Nunca exponer secretos en codigo fuente.\n- Aplicar principio de minimo privilegio.\n- Validar entradas y sanitizar salidas.\n",
-    "policies/architecture.md": "# Politica de Arquitectura\n\n- Seleccionar arquitectura proporcional al tamano del problema.\n- Evitar complejidad operacional innecesaria.\n- Documentar decisiones tecnicas relevantes.\n",
-    "policies/dependencies.md": "# Politica de Dependencias\n\n- Preferir dependencias mantenidas y con licencia compatible.\n- Revisar vulnerabilidades antes de liberar.\n- Evitar librerias duplicadas para el mismo objetivo.\n",
-    "policies/workflow.md": "# Politica de Workflow\n\n- Trabajar por cambios pequenos y revisables.\n- Incluir contexto de negocio en cada PR.\n- Ejecutar checks basicos antes de merge.\n",
-    "policies/compliance.md": "# Politica de Compliance\n\n- Registrar decisiones que impacten cumplimiento.\n- No almacenar datos sensibles sin proteccion.\n- Seguir normativas internas y externas aplicables.\n",
-    "policies/observability.md": "# Politica de Observabilidad\n\n- Definir logs utiles para diagnostico.\n- Incluir metricas minimas de salud en componentes criticos.\n- Evitar logs con informacion sensible.\n",
-    "policies/cost.md": "# Politica de Costos\n\n- Justificar tecnologias con costo operativo alto.\n- Optimizar recursos para carga esperada.\n- Preferir soluciones de bajo costo para prototipos.\n",
+    "tiers/tier1-prototype.md": "# Tier 1 - Prototype\n\n- Prioritize speed and simplicity.\n- Avoid unnecessary overengineering.\n- Maintain minimum security standards.\n",
+    "tiers/tier2-production.md": "# Tier 2 - Production\n\n- Require automated tests for critical changes.\n- Require dependency controls and architecture reviews.\n- Security and stability are mandatory.\n",
+    "tiers/tier3-enterprise.md": "# Tier 3 - Enterprise\n\n- Require traceability, auditing, and hardening.\n- Enforce strict security, compliance, and cost controls.\n- High-impact changes must include a rollback plan.\n",
+    "policies/security.md": "# Security Policy\n\n- Never expose secrets in source code.\n- Apply least-privilege access principles.\n- Validate inputs and sanitize outputs.\n",
+    "policies/architecture.md": "# Architecture Policy\n\n- Choose architecture proportional to problem size.\n- Avoid unnecessary operational complexity.\n- Document relevant technical decisions.\n",
+    "policies/dependencies.md": "# Dependency Policy\n\n- Prefer maintained dependencies with compatible licenses.\n- Review vulnerabilities before release.\n- Avoid duplicate libraries for the same objective.\n",
+    "policies/workflow.md": "# Workflow Policy\n\n- Keep changes small and reviewable.\n- Include business context in each PR.\n- Run basic checks before merge.\n",
+    "policies/compliance.md": "# Compliance Policy\n\n- Record decisions that impact compliance.\n- Do not store sensitive data without protection.\n- Follow applicable internal and external regulations.\n",
+    "policies/observability.md": "# Observability Policy\n\n- Define useful logs for diagnostics.\n- Include minimum health metrics for critical components.\n- Avoid logging sensitive information.\n",
+    "policies/cost.md": "# Cost Policy\n\n- Justify technologies with high operational cost.\n- Optimize resources for expected load.\n- Prefer low-cost solutions for early prototypes.\n",
+    "policies/troubleshooting.md": "# Troubleshooting Policy\n\n- Use a deterministic troubleshooting flow: Reproduce, Isolate, Hypothesize, Verify, Document.\n- Prefer executing troubleshooting with an agent using explicit step-by-step commands and expected outcomes.\n- Persist findings as short notes (issue signature, root cause, fix, and failed attempts) so future runs avoid repeating steps.\n- Before trying a new fix, review prior troubleshooting notes and reference links to previous incidents.\n",
     "policies/dependency-rules.yaml": "deny:\n  \"2\":\n    - left-pad\n  \"3\":\n    - left-pad\n    - request\nwarn:\n  \"1\":\n    - request\n",
   };
 
-  return templates[normalized] ?? "# Documento de gobernanza\n\nPendiente de definir reglas especificas.\n";
+  return templates[normalized] ?? "# Governance Document\n\nPending definition of specific rules.\n";
 }
 
 export function scaffoldGovernanceTemplates(workspaceFolder: vscode.WorkspaceFolder): string[] {

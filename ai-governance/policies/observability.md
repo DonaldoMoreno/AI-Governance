@@ -1,5 +1,5 @@
-# Politica de Observabilidad
+# Observability Policy
 
-- Incluir logging util para diagnostico operativo.
-- Definir metricas minimas de salud en servicios relevantes.
-- Evitar exponer informacion sensible en logs o trazas.
+- Include useful logging for operational diagnostics.
+- Define minimum health metrics for relevant services.
+- Avoid exposing sensitive information in logs or traces.

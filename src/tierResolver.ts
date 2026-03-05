@@ -83,12 +83,12 @@ function autoDetectTier(rootPath: string): GovernanceTier {
 
 function profileSummaryForTier(tier: GovernanceTier): string {
   if (tier === "1") {
-    return "Tier 1: Prototipo o proyecto pequeno con foco en velocidad de iteracion.";
+    return "Tier 1: Prototype or small project focused on iteration speed.";
   }
   if (tier === "2") {
-    return "Tier 2: Proyecto productivo con controles de calidad y seguridad formales.";
+    return "Tier 2: Production project with formal quality and security controls.";
   }
-  return "Tier 3: Sistema critico o empresarial con controles estrictos y auditoria.";
+  return "Tier 3: Enterprise or critical system with strict controls and auditing.";
 }
 
 export async function resolveTier(workspaceFolder: vscode.WorkspaceFolder): Promise<TierResolution> {
@@ -112,7 +112,7 @@ export async function resolveTier(workspaceFolder: vscode.WorkspaceFolder): Prom
         };
       }
     } catch {
-      // Si el YAML esta malformado, continuar con la siguiente prioridad.
+      // If the YAML is malformed, continue with the next priority source.
     }
   }
 

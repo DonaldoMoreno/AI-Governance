@@ -1,5 +1,5 @@
-# Politica de Costos
+# Cost Policy
 
-- Seleccionar soluciones considerando costo total de operacion.
-- Justificar componentes de alto costo por valor de negocio.
-- Preferir opciones simples y de bajo costo en fases tempranas.
+- Select solutions based on total cost of operation.
+- Justify high-cost components with business value.
+- Prefer simple and low-cost options in early phases.
