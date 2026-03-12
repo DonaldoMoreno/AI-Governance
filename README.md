@@ -1,40 +1,135 @@
 # Governed Prompt Studio
 
-`Governed Prompt Studio` is a VS Code extension for creating governed prompts for GitHub Copilot without any direct API integration.
+`Governed Prompt Studio` is a VS Code extension that transforms a governance policy repository into a **Context Engineering + Governance pipeline** for GitHub Copilot — with no direct API integration, no cloud calls, and no external dependencies.
 
-The extension:
-- Builds a final prompt with governance structure by `Tier` and `Scope`.
-- References repository files (`ai-governance/*`) instead of hardcoding rules.
-- Runs a local `Policy Check` and publishes findings to the `Problems` panel.
-- Copies the governed prompt to the clipboard so you can paste it into Copilot Chat.
+The extension reads your `ai-governance/` files, resolves the correct governance tier and task mode, augments your prompt with policy context, and lets you initialize a governed Copilot session that persists across turns via `.github/copilot-instructions.md`.
+
+---
 
 ## Key Features
 
-- `Prompt Studio` webview with:
-  - Multi-line user task editor.
-  - Tier selector (`Auto / 1 / 2 / 3`).
-  - Preset selector (`Fast / Safe / Strict`).
-  - Governance scope checklist (`Security`, `Architecture`, `Dependencies`, `Workflow`, `Compliance`, `Observability`, `Cost`, `Troubleshooting`).
-  - Governance context file preview.
-  - Buttons to generate preview, copy prompt, and run policy check.
-- Status bar integration:
-  - `Tier: <Auto|1|2|3> | Preset: <Fast|Safe|Strict> | Policy: <OK|WARN|DENY>`
-  - QuickPick with fast actions.
-- Tier resolution priority:
-  1. `AI_PROJECT_PROFILE.yaml`
-  2. `aiGovernance.tier` setting
-  3. Auto-detection from repository heuristics
-- Local `Policy Checker` detects:
-  - Hardcoded secrets (`API_KEY=`, `SECRET=`, `password=`, `token=`)
-  - Overengineering keywords (`kubernetes`, `microservices`, `kafka`, `elasticsearch`, `service mesh`)
-  - Restricted dependencies from YAML rules
-- Governance template scaffolding when `ai-governance` files are missing.
+- **Prompt Studio** webview (dark theme) with:
+  - Multi-line user task editor
+  - Task mode selector (`Auto / Diseño de sistema / Debugging / Feature nueva`)
+  - Tier selector (`Auto / 1 / 2 / 3`) and Preset selector (`Fast / Safe / Strict`)
+  - Governance scope checklist (8 scopes)
+  - Context Bundle panel: shows resolved tier, task mode, active scopes, detected stack, governance files
+  - Session badge: `Bootstrap requerido` / `Sesión inicializada ✓`
+  - Buttons: **Inicializar sesión gobernada**, Generar vista previa, Copiar prompt gobernado, Ejecutar policy check
+- **Session bootstrap workflow**: one-time init that writes `.github/copilot-instructions.md` and generates a bootstrap prompt — subsequent turns in the same Copilot Chat session can be shorter
+- **Task-aware compilation**: three compile paths depending on mode and session state
+- **Status bar**: `$(shield) T2 · Debugging | OK` with QuickPick actions
+- **Local Policy Checker**: detects secrets, overengineering, and restricted dependencies
+- **Governance template scaffolding**: missing `ai-governance/` files are auto-created on first run
+
+---
+
+## Task Modes
+
+| Mode | Alcances por defecto | Output Contract |
+|------|---------------------|-----------------|
+| **Diseño de sistema** | Architecture, Dependencies, Workflow, Security | `output-contracts/design-system.md` |
+| **Debugging** | Troubleshooting, Observability, Workflow | `output-contracts/debugging.md` |
+| **Feature nueva** | Architecture, Workflow, Dependencies, Security | `output-contracts/new-feature.md` |
+
+When `Auto` is selected the mode is detected heuristically from your task text (keyword scoring). You can override it with the selector or with the `AI Governance: Establecer modo de tarea` command.
+
+---
+
+## Session Bootstrap Workflow
+
+Governed Prompt Studio supports a two-phase workflow:
+
+### Phase 1 — Initialize once per chat session
+
+1. Open Prompt Studio (`AI Governance: Open Prompt Studio`)
+2. Write a brief task or leave it empty
+3. Click **Inicializar sesión gobernada**
+4. The extension:
+   - Creates `.github/copilot-instructions.md` with repository-level governance instructions
+   - Creates `.github/prompts/governed-session.prompt.md` (template for re-use)
+   - Generates a full bootstrap prompt and copies it to the clipboard
+5. Paste the bootstrap prompt into a **new** GitHub Copilot Chat session
+6. Copilot responds: `✓ Sesión gobernada inicializada. Modo activo: <mode>. Listo para trabajar…`
+
+From this point on, Copilot already has your governance context loaded. The session badge in Prompt Studio turns green: **Sesión inicializada ✓**.
+
+### Phase 2 — Subsequent turns (shorter prompts)
+
+Once the session is initialized, clicking **Copiar prompt gobernado** generates a compact short prompt:
+
+```
+[MODO: Debugging | NIVEL: 2 | PERFIL: Safe]
+Archivos: ai-governance/policies/troubleshooting.md, ai-governance/policies/security.md
+
+Mi tarea: el endpoint /api/orders retorna 500 al recibir un payload vacío.
+```
+
+Copilot already has the full context from Phase 1, so you don't need to repeat it.
+
+> **Nota**: El comportamiento de Copilot está guiado por `.github/copilot-instructions.md` como contexto, pero no puede garantizarse de forma absoluta en todas las sesiones nuevas de chat.
+
+---
+
+## Prompt Structure
+
+### Full governed prompt (Phase 1 or non-bootstrapped session)
+
+```
+== ROLE ==
+Eres un asistente de programación experto…
+
+== PROJECT PROFILE ==
+Nivel de gobernanza: 2 | Perfil: Safe | Fuente: AI_PROJECT_PROFILE.yaml
+
+== TASK MODE ==
+Modo de tarea: Debugging
+…
+
+== ACTIVE GOVERNANCE ==
+Scopes activos: Troubleshooting, Observability, Workflow, Security
+
+== CONTEXT SUMMARY ==
+…
+
+== GOVERNANCE DOCUMENTS ==
+### ai-governance/policies/troubleshooting.md
+…
+
+== EXECUTION RULE ==
+…
+
+== OUTPUT CONTRACT ==
+…
+
+== USER TASK ==
+…
+```
+
+### Short prompt (Phase 2)
+
+```
+[MODO: Debugging | NIVEL: 2 | PERFIL: Safe]
+Archivos: …
+
+Mi tarea: …
+```
+
+### Bootstrap prompt
+
+Full context + session initialization instruction + available task modes + confirmation request.
+
+---
 
 ## Project Structure
 
 ```text
 .
-├── .github/workflows/build-vsix.yml
+├── .github/
+│   ├── copilot-instructions.md        ← repository-level Copilot context (auto-created)
+│   ├── prompts/
+│   │   └── governed-session.prompt.md ← governed session template
+│   └── workflows/build-vsix.yml
 ├── ai-governance/
 │   ├── tiers/
 │   │   ├── tier1-prototype.md
@@ -49,11 +144,22 @@ The extension:
 │       ├── observability.md
 │       ├── cost.md
 │       ├── troubleshooting.md
+│       ├── prompt-augmentation.md
+│       ├── output-contract.md
+│       ├── task-modes.md              ← task mode rules
+│       ├── output-contracts/
+│       │   ├── design-system.md
+│       │   ├── debugging.md
+│       │   └── new-feature.md
 │       └── dependency-rules.yaml
 ├── src/
 │   ├── extension.ts
 │   ├── tierResolver.ts
 │   ├── promptCompiler.ts
+│   ├── promptAugmentation.ts
+│   ├── contextBuilder.ts
+│   ├── contextRouter.ts
+│   ├── taskModeResolver.ts
 │   ├── policyChecker.ts
 │   ├── governanceLoader.ts
 │   ├── diagnostics.ts
@@ -65,47 +171,43 @@ The extension:
 └── README.md
 ```
 
+---
+
 ## Command Palette Commands
 
-- `AI Governance: Open Prompt Studio`
-- `AI Governance: Copy Governed Prompt to Clipboard`
-- `AI Governance: Run Policy Check`
-- `AI Governance: Set Tier`
+| Command | Description |
+|---------|-------------|
+| `AI Governance: Open Prompt Studio` | Open the Prompt Studio webview |
+| `AI Governance: Copy Governed Prompt to Clipboard` | Copy the governed prompt directly |
+| `AI Governance: Run Policy Check` | Run the local policy checker |
+| `AI Governance: Set Tier` | Override the governance tier |
+| `AI Governance: Inicializar sesión gobernada` | Bootstrap a new Copilot session |
+| `AI Governance: Establecer modo de tarea` | Override the task mode |
+| `AI Governance: Crear instrucciones para Copilot` | Scaffold `.github/copilot-instructions.md` |
 
-## Usage Flow
+---
 
-1. Run `AI Governance: Open Prompt Studio`.
-2. Write your task in the prompt editor.
-3. Select `Tier`, `Preset`, and `Scopes`.
-4. Click `Generate Preview` to preview the governed prompt.
-5. Click `Copy Governed Prompt to Clipboard`.
-6. Paste the prompt into Copilot Chat.
+## Tier Resolution Priority
 
-## Compiled Prompt Structure
+1. `AI_PROJECT_PROFILE.yaml` (repository-level explicit config)
+2. `aiGovernance.tier` VS Code setting
+3. Auto-detection from repository heuristics (presence of Dockerfile, kubernetes/, CI files, etc.)
 
-The compiler generates these sections:
-- `ROLE`
-- `PROJECT PROFILE`
-- `ACTIVE GOVERNANCE`
-- `GOVERNANCE DOCUMENTS`
-- `OUTPUT CONTRACT`
-- `USER TASK`
+---
 
 ## Policy Checker
 
 Severity by tier:
-- Tier 1:
-  - secrets: `DENY`
-  - overengineering: `WARN`
-  - restricted dependencies: `WARN`
-- Tier 2:
-  - secrets: `DENY`
-  - restricted dependencies: `DENY`
-  - overengineering: `WARN`
-- Tier 3:
-  - most violations: `DENY`
 
-Findings are published in `Problems`.
+| Finding | Tier 1 | Tier 2 | Tier 3 |
+|---------|--------|--------|--------|
+| Hardcoded secrets | DENY | DENY | DENY |
+| Restricted dependencies | WARN | DENY | DENY |
+| Overengineering | WARN | WARN | DENY |
+
+Findings are published to the VS Code `Problems` panel.
+
+---
 
 ## Build and Package
 
@@ -127,19 +229,18 @@ Package VSIX:
 npm run package
 ```
 
-## Install the VSIX Extension
+Install locally:
 
-1. Generate the `.vsix` file with `npm run package`.
-2. In VS Code, open `Extensions`.
-3. Select `Install from VSIX...`.
-4. Choose the generated file.
+```bash
+code --install-extension governed-prompt-studio-0.1.0.vsix
+```
 
-## VSIX CI
+---
 
-Workflow `.github/workflows/build-vsix.yml` runs:
-- checkout
-- setup node
-- npm install
-- compile
-- vsce package
-- upload VSIX artifact
+## Settings
+
+| Setting | Type | Default | Description |
+|---------|------|---------|-------------|
+| `aiGovernance.tier` | `"auto"\|"1"\|"2"\|"3"` | `"auto"` | Governance tier |
+| `aiGovernance.preset` | `"Fast"\|"Safe"\|"Strict"` | `"Safe"` | Governance preset |
+| `aiGovernance.taskMode` | `"auto"\|"design-system"\|"debugging"\|"new-feature"` | `"auto"` | Active task mode |

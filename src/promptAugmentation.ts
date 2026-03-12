@@ -1,4 +1,5 @@
 import { GovernanceScope } from "./governanceLoader";
+import { TaskMode, TASK_MODE_CONFIGS } from "./taskModeResolver";
 
 // Each entry maps keyword signals to the scopes they activate
 const KEYWORD_SCOPE_MAP: Array<{ keywords: string[]; scopes: GovernanceScope[] }> = [
@@ -19,7 +20,7 @@ const KEYWORD_SCOPE_MAP: Array<{ keywords: string[]; scopes: GovernanceScope[] }
     scopes: ["Architecture"],
   },
   {
-    keywords: ["debug", "traceback", "error", "exception", "crash", "fix", "bug", "issue", "broken", "failure"],
+    keywords: ["debug", "traceback", "error", "exception", "crash", "fix", "bug", "issue", "broken", "failure", "falla", "fallo"],
     scopes: ["Troubleshooting"],
   },
   {
@@ -70,3 +71,18 @@ export function augmentScopes(
 
   return { augmentedScopes: Array.from(active), addedScopes: added };
 }
+
+/**
+ * Augment scopes starting from the union of existing scopes and the task mode
+ * default scopes, then further expand via keyword detection.
+ */
+export function augmentScopesForMode(
+  userPrompt: string,
+  existingScopes: GovernanceScope[],
+  taskMode: TaskMode
+): AugmentationResult {
+  const modeDefaults = TASK_MODE_CONFIGS[taskMode].defaultScopes;
+  const merged = Array.from(new Set<GovernanceScope>([...existingScopes, ...modeDefaults]));
+  return augmentScopes(userPrompt, merged);
+}
+

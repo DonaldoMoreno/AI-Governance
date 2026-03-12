@@ -3,15 +3,18 @@ import * as path from "path";
 import * as vscode from "vscode";
 import { GovernanceScope } from "./governanceLoader";
 import { GovernanceTier } from "./tierResolver";
+import { TaskMode } from "./taskModeResolver";
 
 export interface ContextBundle {
   tier: GovernanceTier;
   preset: string;
+  taskMode: TaskMode;
   scopes: GovernanceScope[];
   repoStructure: string[];
   detectedStack: string[];
   governanceFiles: string[];
   userPrompt: string;
+  hasCustomInstructions: boolean;
 }
 
 // Manifest files that reveal the technology stack
@@ -87,19 +90,23 @@ export function buildContextBundle(
   workspaceFolder: vscode.WorkspaceFolder,
   tier: GovernanceTier,
   preset: string,
+  taskMode: TaskMode,
   scopes: GovernanceScope[],
   governanceFiles: string[],
   userPrompt: string
 ): ContextBundle {
   const root = workspaceFolder.uri.fsPath;
+  const instrPath = path.join(root, ".github", "copilot-instructions.md");
 
   return {
     tier,
     preset,
+    taskMode,
     scopes,
     repoStructure: scanTopLevel(root),
     detectedStack: inferStack(root),
     governanceFiles: governanceFiles.map((f) => path.relative(root, f)),
     userPrompt,
+    hasCustomInstructions: fs.existsSync(instrPath),
   };
 }

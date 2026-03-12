@@ -14,7 +14,10 @@
     "onCommand:aiGovernance.openPromptStudio",
     "onCommand:aiGovernance.copyGovernedPrompt",
     "onCommand:aiGovernance.runPolicyCheck",
-    "onCommand:aiGovernance.setTier"
+    "onCommand:aiGovernance.setTier",
+    "onCommand:aiGovernance.initSession",
+    "onCommand:aiGovernance.setTaskMode",
+    "onCommand:aiGovernance.scaffoldCopilotInstructions"
   ],
   "main": "./out/extension.js",
   "scripts": {
@@ -39,6 +42,18 @@
       {
         "command": "aiGovernance.setTier",
         "title": "AI Governance: Set Tier"
+      },
+      {
+        "command": "aiGovernance.initSession",
+        "title": "AI Governance: Inicializar sesión gobernada"
+      },
+      {
+        "command": "aiGovernance.setTaskMode",
+        "title": "AI Governance: Establecer modo de tarea"
+      },
+      {
+        "command": "aiGovernance.scaffoldCopilotInstructions",
+        "title": "AI Governance: Crear instrucciones para Copilot"
       }
     ],
     "configuration": {
@@ -64,6 +79,17 @@
           ],
           "default": "Safe",
           "description": "Governance preset applied when compiling prompts."
+        },
+        "aiGovernance.taskMode": {
+          "type": "string",
+          "enum": [
+            "auto",
+            "design-system",
+            "debugging",
+            "new-feature"
+          ],
+          "default": "auto",
+          "description": "Modo de tarea activo para la generación de prompts."
         }
       }
     }
