@@ -32,6 +32,7 @@ export interface PromptStudioState {
   contextFiles: string[];
   previewPrompt: string;
   policyState: "OK" | "WARN" | "DENY";
+  detectedStack: string[];
 }
 
 export interface PromptStudioHandlers {
@@ -106,7 +107,7 @@ export class PromptStudioWebview {
     const initialJson = JSON.stringify(initialState).replace(/</g, "\\u003c");
 
     return `<!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
   <meta charset="UTF-8" />
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'nonce-${nonce}';" />
@@ -125,6 +126,8 @@ export class PromptStudioWebview {
       --accent-ghost: #334155;
       --accent-soft: #1d4ed8;
       --border: #334155;
+      --stack-tag-bg: #0c4a6e;
+      --stack-tag-color: #bae6fd;
     }
     body {
       font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
@@ -145,17 +148,9 @@ export class PromptStudioWebview {
       padding: 12px;
       box-shadow: 0 10px 24px rgba(2, 6, 23, 0.45);
     }
-    h1 {
-      margin: 0 0 10px;
-      font-size: 1.3rem;
-    }
-    h2 {
-      margin: 0 0 8px;
-      font-size: 1rem;
-    }
-    label {
-      color: var(--muted);
-    }
+    h1 { margin: 0 0 10px; font-size: 1.3rem; }
+    h2 { margin: 0 0 8px; font-size: 1rem; }
+    label { color: var(--muted); }
     textarea, select {
       width: 100%;
       border: 1px solid var(--border);
@@ -170,20 +165,13 @@ export class PromptStudioWebview {
       outline: 1px solid var(--accent);
       border-color: var(--accent);
     }
-    textarea {
-      min-height: 120px;
-      resize: vertical;
-    }
+    textarea { min-height: 120px; resize: vertical; }
     .scopes {
       display: grid;
       grid-template-columns: repeat(2, minmax(110px, 1fr));
       gap: 6px;
     }
-    .actions {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-    }
+    .actions { display: flex; flex-wrap: wrap; gap: 8px; }
     button {
       border: 1px solid transparent;
       border-radius: 10px;
@@ -194,21 +182,10 @@ export class PromptStudioWebview {
       background: var(--accent);
       transition: transform 120ms ease, opacity 120ms ease, background 120ms ease;
     }
-    button.secondary {
-      background: var(--accent-secondary);
-    }
-    button.ghost {
-      background: var(--accent-ghost);
-      border-color: var(--border);
-    }
-    button:hover {
-      transform: translateY(-1px);
-      opacity: 0.92;
-    }
-    ul {
-      margin: 0;
-      padding-left: 18px;
-    }
+    button.secondary { background: var(--accent-secondary); }
+    button.ghost { background: var(--accent-ghost); border-color: var(--border); }
+    button:hover { transform: translateY(-1px); opacity: 0.92; }
+    ul { margin: 0; padding-left: 18px; }
     .badge {
       display: inline-block;
       border-radius: 999px;
@@ -219,34 +196,59 @@ export class PromptStudioWebview {
       font-size: 0.85rem;
       font-weight: 600;
     }
+    .bundle-row {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-size: 0.9rem;
+    }
+    .bundle-label {
+      color: var(--muted);
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 2px;
+    }
+    .tag-list { display: flex; flex-wrap: wrap; gap: 4px; }
+    .tag {
+      background: var(--stack-tag-bg);
+      color: var(--stack-tag-color);
+      border-radius: 6px;
+      padding: 2px 8px;
+      font-size: 0.8rem;
+      font-weight: 500;
+    }
+    .tag.scope { background: #1e3a5f; color: #93c5fd; }
+    .tag.file  { background: #1a2e1c; color: #86efac; font-family: monospace; }
   </style>
 </head>
 <body>
   <h1>Prompt Studio</h1>
-  <div class="badge" id="policyBadge">Policy: ${initialState.policyState}</div>
+  <div class="badge" id="policyBadge">Política: ${initialState.policyState}</div>
   <div class="grid" style="margin-top: 12px;">
+
     <section class="card" style="grid-column: 1 / -1;">
-      <h2>Prompt Editor</h2>
-      <textarea id="userTask" placeholder="Write the task for Copilot..."></textarea>
+      <h2>Editor de Prompt</h2>
+      <textarea id="userTask" placeholder="Escribe la tarea para Copilot..."></textarea>
     </section>
 
     <section class="card">
-      <h2>Governance Configuration</h2>
-      <label for="tier">Tier</label>
+      <h2>Configuración de Gobernanza</h2>
+      <label for="tier">Nivel</label>
       <select id="tier">
         <option value="auto">Auto</option>
         <option value="1">1</option>
         <option value="2">2</option>
         <option value="3">3</option>
       </select>
-      <label for="preset" style="margin-top:8px; display:block;">Preset</label>
+      <label for="preset" style="margin-top:8px; display:block;">Perfil</label>
       <select id="preset">
         <option value="Fast">Fast</option>
         <option value="Safe">Safe</option>
         <option value="Strict">Strict</option>
       </select>
       <div style="margin-top:10px;">
-        <div style="font-weight:600; margin-bottom:6px;">Scopes</div>
+        <div style="font-weight:600; margin-bottom:6px;">Alcances</div>
         <div class="scopes">
           <label><input type="checkbox" value="Security" checked /> Security</label>
           <label><input type="checkbox" value="Architecture" checked /> Architecture</label>
@@ -261,21 +263,42 @@ export class PromptStudioWebview {
     </section>
 
     <section class="card">
-      <h2>Context Preview</h2>
-      <ul id="contextFiles"></ul>
-    </section>
-
-    <section class="card" style="grid-column: 1 / -1;">
-      <h2>Actions</h2>
-      <div class="actions">
-        <button id="btnGenerate" class="secondary">Generate Preview</button>
-        <button id="btnCopy">Copy Governed Prompt to Clipboard</button>
-        <button id="btnPolicy" class="ghost">Run Policy Check</button>
+      <h2>Paquete de Contexto</h2>
+      <div class="bundle-row">
+        <div>
+          <div class="bundle-label">Nivel detectado</div>
+          <span id="bundleTier">—</span>
+        </div>
+        <div>
+          <div class="bundle-label">Perfil</div>
+          <span id="bundlePreset">—</span>
+        </div>
+        <div>
+          <div class="bundle-label">Alcances activos</div>
+          <div class="tag-list" id="bundleScopes"></div>
+        </div>
+        <div>
+          <div class="bundle-label">Stack detectado</div>
+          <div class="tag-list" id="bundleStack"></div>
+        </div>
+        <div>
+          <div class="bundle-label">Archivos de gobernanza</div>
+          <div class="tag-list" id="bundleFiles"></div>
+        </div>
       </div>
     </section>
 
     <section class="card" style="grid-column: 1 / -1;">
-      <h2>Governed Prompt (Preview)</h2>
+      <h2>Acciones</h2>
+      <div class="actions">
+        <button id="btnGenerate" class="secondary">Generar vista previa</button>
+        <button id="btnCopy">Copiar prompt gobernado</button>
+        <button id="btnPolicy" class="ghost">Ejecutar policy check</button>
+      </div>
+    </section>
+
+    <section class="card" style="grid-column: 1 / -1;">
+      <h2>Prompt Gobernado (Vista Previa)</h2>
       <textarea id="preview" readonly></textarea>
     </section>
   </div>
@@ -288,27 +311,39 @@ export class PromptStudioWebview {
       userTask: document.getElementById("userTask"),
       tier: document.getElementById("tier"),
       preset: document.getElementById("preset"),
-      contextFiles: document.getElementById("contextFiles"),
       preview: document.getElementById("preview"),
       policyBadge: document.getElementById("policyBadge"),
+      bundleTier: document.getElementById("bundleTier"),
+      bundlePreset: document.getElementById("bundlePreset"),
+      bundleScopes: document.getElementById("bundleScopes"),
+      bundleStack: document.getElementById("bundleStack"),
+      bundleFiles: document.getElementById("bundleFiles"),
     };
 
     function selectedScopes() {
       return Array.from(document.querySelectorAll('input[type="checkbox"]:checked')).map((x) => x.value);
     }
 
-    function updateContext(files) {
-      elements.contextFiles.innerHTML = "";
-      for (const file of files) {
-        const li = document.createElement("li");
-        li.textContent = file;
-        elements.contextFiles.appendChild(li);
+    function makeTags(container, items, cssClass) {
+      container.innerHTML = "";
+      if (!items || !items.length) {
+        container.textContent = "—";
+        return;
       }
-      if (!files.length) {
-        const li = document.createElement("li");
-        li.textContent = "No governance files were found.";
-        elements.contextFiles.appendChild(li);
+      for (const item of items) {
+        const span = document.createElement("span");
+        span.className = "tag " + (cssClass || "");
+        span.textContent = item;
+        container.appendChild(span);
       }
+    }
+
+    function updateBundle(state) {
+      elements.bundleTier.textContent = state.tier === "auto" ? "Auto" : "Tier " + state.tier;
+      elements.bundlePreset.textContent = state.preset || "—";
+      makeTags(elements.bundleScopes, state.scopes, "scope");
+      makeTags(elements.bundleStack, state.detectedStack && state.detectedStack.length ? state.detectedStack : ["—"]);
+      makeTags(elements.bundleFiles, state.contextFiles, "file");
     }
 
     function payload(command) {
@@ -325,8 +360,8 @@ export class PromptStudioWebview {
       elements.tier.value = state.tier;
       elements.preset.value = state.preset;
       elements.preview.value = state.previewPrompt;
-      elements.policyBadge.textContent = "Policy: " + state.policyState;
-      updateContext(state.contextFiles);
+      elements.policyBadge.textContent = "Política: " + state.policyState;
+      updateBundle(state);
 
       const checkboxes = document.querySelectorAll('input[type="checkbox"]');
       checkboxes.forEach((box) => {

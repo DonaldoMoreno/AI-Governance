@@ -12,6 +12,8 @@ import { runPolicyCheck } from "./policyChecker";
 import { GovernanceStatusBar } from "./ui/statusBar";
 import { PromptStudioWebview } from "./ui/promptStudioWebview";
 import { resolveTier, GovernanceTier, TierSelection } from "./tierResolver";
+import { buildContextBundle } from "./contextBuilder";
+import { augmentScopes } from "./promptAugmentation";
 
 interface RuntimeState {
   selectedTier: TierSelection;
@@ -73,27 +75,41 @@ export function activate(context: vscode.ExtensionContext): void {
     return resolved.tier;
   };
 
-  const generatePrompt = async (userTask: string): Promise<{ prompt: string; files: string[] }> => {
+  const generatePrompt = async (userTask: string): Promise<{ prompt: string; files: string[]; detectedStack: string[] }> => {
     const tier = await resolveEffectiveTier();
-    const files = getGovernanceFileReferences(workspaceFolder, tier, state.scopes);
+
+    // Deterministic scope augmentation based on prompt keywords
+    const { augmentedScopes } = augmentScopes(userTask, state.scopes);
+
+    const files = getGovernanceFileReferences(workspaceFolder, tier, augmentedScopes);
+
+    const contextBundle = buildContextBundle(
+      workspaceFolder,
+      tier,
+      state.preset,
+      augmentedScopes,
+      files,
+      userTask
+    );
 
     const prompt = compileGovernedPrompt({
       workspaceFolder,
       tier,
       preset: state.preset,
-      scopes: state.scopes,
+      scopes: augmentedScopes,
       governanceFiles: files,
       userTask,
       profileSummary: state.profileSummary,
+      contextBundle,
     });
 
     state.latestPrompt = prompt;
-    return { prompt, files };
+    return { prompt, files, detectedStack: contextBundle.detectedStack };
   };
 
   const runPolicy = async (): Promise<void> => {
     const tier = await resolveEffectiveTier();
-    const result = await runPolicyCheck(workspaceFolder, tier);
+    const result = await runPolicyCheck(workspaceFolder, tier, state.latestPrompt);
     publishDiagnostics(diagnostics, result.findings);
     state.policy = aggregatePolicy(result.findings);
     updateStatusBar();
@@ -111,7 +127,7 @@ export function activate(context: vscode.ExtensionContext): void {
   };
 
   const refreshPromptStudio = async (userTask: string): Promise<void> => {
-    const { prompt, files } = await generatePrompt(userTask);
+    const { prompt, files, detectedStack } = await generatePrompt(userTask);
     PromptStudioWebview.createOrShow(
       context,
       {
@@ -126,15 +142,15 @@ export function activate(context: vscode.ExtensionContext): void {
           void vscode.window.showInformationMessage(
             "Governed prompt copied to clipboard. Paste it into Copilot Chat."
           );
-          PromptStudioWebview.createOrShow(context, handlers, webviewState(compiled.files, compiled.prompt));
+          PromptStudioWebview.createOrShow(context, handlers, webviewState(compiled.files, compiled.prompt, compiled.detectedStack));
         },
         onRunPolicyCheck: async (message) => {
           await syncStateFromWebview(message.tier, message.preset, message.scopes);
           await runPolicy();
-          PromptStudioWebview.createOrShow(context, handlers, webviewState(files, prompt));
+          PromptStudioWebview.createOrShow(context, handlers, webviewState(files, prompt, detectedStack));
         },
       },
-      webviewState(files, prompt)
+      webviewState(files, prompt, detectedStack)
     );
   };
 
@@ -155,10 +171,10 @@ export function activate(context: vscode.ExtensionContext): void {
       userTask: string;
     }) => {
       await syncStateFromWebview(message.tier, message.preset, message.scopes);
-      const { prompt, files } = await generatePrompt(message.userTask);
+      const { prompt, files, detectedStack } = await generatePrompt(message.userTask);
       await vscode.env.clipboard.writeText(prompt);
       void vscode.window.showInformationMessage("Governed prompt copied to clipboard. Paste it into Copilot Chat.");
-      PromptStudioWebview.createOrShow(context, handlers, webviewState(files, prompt));
+      PromptStudioWebview.createOrShow(context, handlers, webviewState(files, prompt, detectedStack));
     },
     onRunPolicyCheck: async (message: {
       tier: TierSelection;
@@ -167,18 +183,19 @@ export function activate(context: vscode.ExtensionContext): void {
     }) => {
       await syncStateFromWebview(message.tier, message.preset, message.scopes);
       await runPolicy();
-      const { prompt, files } = await generatePrompt(state.latestPrompt);
-      PromptStudioWebview.createOrShow(context, handlers, webviewState(files, prompt));
+      const { prompt, files, detectedStack } = await generatePrompt(state.latestPrompt);
+      PromptStudioWebview.createOrShow(context, handlers, webviewState(files, prompt, detectedStack));
     },
   };
 
-  const webviewState = (contextFiles: string[], previewPrompt: string) => ({
+  const webviewState = (contextFiles: string[], previewPrompt: string, detectedStack: string[] = []) => ({
     tier: state.selectedTier,
     preset: state.preset,
     scopes: state.scopes,
     contextFiles: contextFiles.map((filePath) => path.relative(workspaceFolder.uri.fsPath, filePath)),
     previewPrompt,
     policyState: state.policy,
+    detectedStack,
   });
 
   const syncStateFromWebview = async (
@@ -201,9 +218,9 @@ export function activate(context: vscode.ExtensionContext): void {
 
   const openPromptStudio = async (): Promise<void> => {
     await ensureGovernanceTemplates(workspaceFolder);
-    const { prompt, files } = await generatePrompt(state.latestPrompt);
+    const { prompt, files, detectedStack } = await generatePrompt(state.latestPrompt);
 
-    PromptStudioWebview.createOrShow(context, handlers, webviewState(files, prompt));
+    PromptStudioWebview.createOrShow(context, handlers, webviewState(files, prompt, detectedStack));
   };
 
   const setTier = async (): Promise<void> => {

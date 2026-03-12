@@ -123,9 +123,22 @@ function checkDependencies(rootPath: string, tier: GovernanceTier, findings: Pol
   }
 }
 
+function checkPromptQuality(userPrompt: string, findings: PolicyFinding[]): void {
+  const trimmed = userPrompt.trim();
+  if (trimmed.length > 0 && trimmed.length < 10) {
+    findings.push({
+      filePath: "",
+      line: 0,
+      severity: "WARN",
+      message: "[Prompt Quality] El prompt es muy corto. Considera agregar más contexto.",
+    });
+  }
+}
+
 export async function runPolicyCheck(
   workspaceFolder: vscode.WorkspaceFolder,
-  tier: GovernanceTier
+  tier: GovernanceTier,
+  userPrompt?: string
 ): Promise<CheckResult> {
   const rootPath = workspaceFolder.uri.fsPath;
   const files = scanFiles(rootPath);
@@ -165,6 +178,10 @@ export async function runPolicyCheck(
   }
 
   checkDependencies(rootPath, tier, findings);
+
+  if (userPrompt !== undefined) {
+    checkPromptQuality(userPrompt, findings);
+  }
 
   return { findings };
 }

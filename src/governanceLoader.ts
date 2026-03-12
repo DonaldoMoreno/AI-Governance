@@ -36,6 +36,8 @@ const requiredFiles = [
   "policies/observability.md",
   "policies/cost.md",
   "policies/troubleshooting.md",
+  "policies/prompt-augmentation.md",
+  "policies/output-contract.md",
   "policies/dependency-rules.yaml",
 ];
 
@@ -95,6 +97,8 @@ function defaultTemplateByPath(relPath: string): string {
     "policies/observability.md": "# Observability Policy\n\n- Define useful logs for diagnostics.\n- Include minimum health metrics for critical components.\n- Avoid logging sensitive information.\n",
     "policies/cost.md": "# Cost Policy\n\n- Justify technologies with high operational cost.\n- Optimize resources for expected load.\n- Prefer low-cost solutions for early prototypes.\n",
     "policies/troubleshooting.md": "# Troubleshooting Policy\n\n- Use a deterministic troubleshooting flow: Reproduce, Isolate, Hypothesize, Verify, Document.\n- Prefer executing troubleshooting with an agent using explicit step-by-step commands and expected outcomes.\n- Persist findings as short notes (issue signature, root cause, fix, and failed attempts) so future runs avoid repeating steps.\n- Before trying a new fix, review prior troubleshooting notes and reference links to previous incidents.\n",
+    "policies/prompt-augmentation.md": "# Prompt Augmentation Policy\n\nGoal: Refine the user prompt before solving so that the AI operates on a clear, well-scoped task.\n\n## Refinement Flow\n\n1. **Clarify** — Identify vague or ambiguous parts.\n2. **Structure** — Decompose into discrete sub-tasks when needed.\n3. **Scope Inference** — Infer the relevant code area from repository context.\n4. **Constraint Preservation** — Preserve the original intent; never invent business requirements.\n5. **Refined Task** — Produce a clearly stated Refined Task before the solution.\n\n## Rules\n\n- Do not assume requirements that are not in the prompt or repository.\n- When the prompt references a file, always read it before responding.\n- When the prompt is a single word or very short, ask for clarification before proceeding.\n- Output the Refined Task as the very first section of your response.\n",
+    "policies/output-contract.md": "# Output Contract Policy\n\nAll AI responses must follow this structure:\n\n1. **Refined Task** — Restate the task after applying prompt-augmentation.md.\n2. **Assumptions** — List any assumptions made.\n3. **Implementation Plan** — High-level steps to be taken.\n4. **Files to Modify** — List each file and the change summary.\n5. **Code Changes** — Provide the actual code with diffs or full blocks.\n6. **Risks or Notes** — Surface any risks, edge cases, or follow-up actions.\n\n## Rules\n\n- All sections are required unless explicitly not applicable.\n- Mark N/A sections explicitly rather than omitting them.\n- Code changes must include the file path and sufficient context (at least 3 lines before and after).\n- Avoid unexplained assumptions; every assumption must appear in section 2.\n",
     "policies/dependency-rules.yaml": "deny:\n  \"2\":\n    - left-pad\n  \"3\":\n    - left-pad\n    - request\nwarn:\n  \"1\":\n    - request\n",
   };
 

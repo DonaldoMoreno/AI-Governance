@@ -2,6 +2,7 @@ import * as path from "path";
 import * as vscode from "vscode";
 import { GovernanceScope } from "./governanceLoader";
 import { GovernanceTier } from "./tierResolver";
+import { ContextBundle } from "./contextBuilder";
 
 export type GovernancePreset = "Fast" | "Safe" | "Strict";
 
@@ -13,31 +14,14 @@ export interface PromptCompileInput {
   governanceFiles: string[];
   userTask: string;
   profileSummary: string;
+  contextBundle?: ContextBundle;
 }
 
-function outputContractByTier(tier: GovernanceTier): string {
-  if (tier === "1") {
-    return [
-      "1. Keep the response concise and focused on delivering a functional solution.",
-      "2. Include any minimal security risks detected.",
-      "3. Propose the immediate next step.",
-    ].join("\n");
-  }
-
-  if (tier === "2") {
-    return [
-      "1. Structure the response as: Design, Implementation, Risks, Testing.",
-      "2. Explain impact on dependencies and architecture.",
-      "3. Include a validation checklist before merge.",
-    ].join("\n");
-  }
-
-  return [
-    "1. Provide a formal response with sections: Decision, Controls, Compliance, Operations.",
-    "2. Include mitigations, observability, and operational cost impact.",
-    "3. Include assumptions, residual risks, and a rollback strategy.",
-  ].join("\n");
-}
+// Always included regardless of active scopes
+const ALWAYS_INCLUDE_POLICIES = [
+  "ai-governance/policies/prompt-augmentation.md",
+  "ai-governance/policies/output-contract.md",
+];
 
 function presetDescription(preset: GovernancePreset): string {
   if (preset === "Fast") {
@@ -50,26 +34,51 @@ function presetDescription(preset: GovernancePreset): string {
 }
 
 export function compileGovernedPrompt(input: PromptCompileInput): string {
-  const relativeFiles = input.governanceFiles.map((filePath) => path.relative(input.workspaceFolder.uri.fsPath, filePath));
+  const relativeFiles = input.governanceFiles.map((filePath) =>
+    path.relative(input.workspaceFolder.uri.fsPath, filePath)
+  );
+
+  // Merge governance files with always-included policies, deduplicating
+  const allRefFiles = Array.from(new Set([...relativeFiles, ...ALWAYS_INCLUDE_POLICIES]));
+
+  // Build CONTEXT SUMMARY lines from the context bundle when available
+  const contextLines: string[] = [];
+  if (input.contextBundle) {
+    const { detectedStack, repoStructure } = input.contextBundle;
+    contextLines.push(`Detected stack: ${detectedStack.join(", ")}`);
+    const topFiles = repoStructure.slice(0, 15).join(", ");
+    if (topFiles) {
+      contextLines.push(`Repository root entries: ${topFiles}`);
+    }
+  }
 
   const sections = [
     "ROLE",
-    "You are a development assistant that must strictly follow repository governance. Do not ignore rules.",
+    "You are GitHub Copilot working in this repository. You must strictly follow all governance rules. Do not ignore them.",
     "",
     "PROJECT PROFILE",
     input.profileSummary,
+    `Tier: ${input.tier}`,
+    `Preset: ${input.preset} — ${presetDescription(input.preset)}`,
     "",
     "ACTIVE GOVERNANCE",
-    `Tier: ${input.tier}`,
     `Scopes: ${input.scopes.join(", ")}`,
-    `Preset: ${input.preset} (${presetDescription(input.preset)})`,
+    "",
+    "CONTEXT SUMMARY",
+    ...(contextLines.length ? contextLines : ["No additional context captured."]),
     "",
     "GOVERNANCE DOCUMENTS",
-    "Read and apply these repository files before responding:",
-    ...relativeFiles.map((rel) => `- ${rel}`),
+    "Read and apply all of the following repository files before responding:",
+    ...allRefFiles.map((rel) => `- ${rel}`),
+    "",
+    "EXECUTION RULE",
+    "Before solving the task:",
+    "1. Refine the user prompt according to the method defined in ai-governance/policies/prompt-augmentation.md",
+    "2. State assumptions if necessary.",
+    "3. Execute the task following all governance rules defined in the documents above.",
     "",
     "OUTPUT CONTRACT",
-    outputContractByTier(input.tier),
+    "Follow the response structure defined in: ai-governance/policies/output-contract.md",
     "",
     "USER TASK",
     input.userTask.trim() || "No task specified.",
